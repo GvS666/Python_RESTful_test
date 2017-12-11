@@ -110,9 +110,16 @@ makes our jaw drop, but only if you have extra time, this is not mandatory
 **Questions**
 
 * About the distances endpoint, please explain how would you scale this to hundreds and thousands of petitions per second, 
-considering this is a CPU intensive endpoint. 
-* How would you apporach this if latitude and longitude of user would be changing very frequently as well?  
+considering this is a CPU intensive endpoint.
 
+```
+I would cache it
+```
+
+* How would you apporach this if latitude and longitude of user would be changing very frequently as well?  
+```
+I would probably look into partial cache updates, to recalculate only changing distances, look for fastest algorithm, even at the cost of precision or just buy faster server
+```
 
 **Deliverable**
 
