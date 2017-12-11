@@ -99,15 +99,7 @@ def get_user(user_id):
     return jsonify({'result': output})
 
 
-@app.route('/prt/api/v1.0/users', methods=['POST'])
-@auth.login_required
-def create_user():
-    """
-    Should add a new user to the users collection, with validation
-    note: Always return the appropriate response for the action requested.
-    """
-    users = mongo_mgr.db.users
-    request_data = request.get_json()
+def get_user_data(request_data):
     missing = []
     data = {}
     for r in required:
@@ -116,7 +108,18 @@ def create_user():
         else:
             data[r] = request_data[r]
     if missing:
-        raise InvalidUsage('Missing user data: %s' % ', '.join(missing) , status_code=400)
+        raise InvalidUsage('Missing user data: %s' % ', '.join(missing), status_code=400)
+    return data
+
+@app.route('/prt/api/v1.0/users', methods=['POST'])
+@auth.login_required
+def create_user():
+    """
+    Should add a new user to the users collection, with validation
+    note: Always return the appropriate response for the action requested.
+    """
+    users = mongo_mgr.db.users
+    data = get_user_data(request.get_json())
     data['id'] = str(uuid.uuid4().int)
     users.insert(data)
     del data['_id']
@@ -130,19 +133,34 @@ def update_user(user_id):
     Update user specified with user ID and return updated user contents
     Note: Always return the appropriate response for the action requested.
     """
-    return jsonify({})
+    users = mongo_mgr.db.users
+    user = users.find_one({'id': str(user_id)})
+    if not user:
+        raise InvalidUsage('User with ID %d not found' % user_id, status_code=404)
+    data = get_user_data(request.get_json())
+    mongo_mgr.db.users.update_one({
+        '_id': user['_id']
+    }, {
+        '$set': data
+    }, upsert=False)
+    return jsonify({'result': data})
 
 
-@app.route('/todo/api/v1.0/users/<int:user_id>', methods=['DELETE'])
+@app.route('/prt/api/v1.0/users/<int:user_id>', methods=['DELETE'])
 @auth.login_required
 def delete_user(user_id):
     """
     Delete user specified in user ID
     Note: Always return the appropriate response for the action requested.
     """
-    return jsonify({})
+    users = mongo_mgr.db.users
+    user = users.find_one({'id': str(user_id)})
+    if not user:
+        raise InvalidUsage('User with ID %d not found' % user_id, status_code=404)
+    mongo_mgr.db.users.remove({'_id': user['_id']})
+    return jsonify({'result': 'User with ID %d deleted.' % user_id})
 
-@app.route('/todo/api/v1.0/distances', methods=['GET'])
+@app.route('/prt/api/v1.0/distances', methods=['GET'])
 @auth.login_required
 def get_distances(user_id):
     """
