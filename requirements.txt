@@ -13,3 +13,5 @@ python-dateutil==2.6.1
 pytz==2017.3
 six==1.11.0
 Werkzeug==0.13
+geopy==1.11.0
+numpy==1.13.3

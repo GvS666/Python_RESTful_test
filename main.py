@@ -1,9 +1,12 @@
 #!flask/bin/python
+import itertools
 import uuid
 
+import numpy as np
 from flask import Flask, jsonify, request, make_response
 from flask_httpauth import HTTPBasicAuth
 from flask_pymongo import PyMongo
+from geopy.distance import vincenty
 
 app = Flask(__name__, static_url_path="")
 auth = HTTPBasicAuth()
@@ -71,6 +74,7 @@ def get_users():
     users = mongo_mgr.db.users
     output = []
     for user in users.find():
+        print(user)
         output.append({
             'firstname': user['firstname'],
             'lastname': user['lastname'],
@@ -162,14 +166,44 @@ def delete_user(user_id):
 
 @app.route('/prt/api/v1.0/distances', methods=['GET'])
 @auth.login_required
-def get_distances(user_id):
+def get_distances():
     """
     Each user has a lat/lon associated with them.  Determine the distance
     between each user pair, and provide the min/max/average/std as a json response.
     This should be GET only.
     You can use numpy or whatever suits you
     """
-    return jsonify({})
+    def distance(a, b):
+      coords_1 = (a['latitude'], a['longitude'])
+      coords_2 = (b['latitude'], b['longitude'])
+
+      return {
+        'a' : a,
+        'b' : b,
+        'distance': vincenty(coords_1, coords_2).km
+      }
+
+    users = mongo_mgr.db.users
+    users_list = []
+    for user in users.find():
+      users_list.append({
+        'firstname': user['firstname'],
+        'lastname': user['lastname'],
+        'latitude': user['latitude'],
+        'longitude': user['longitude'],
+        'id': user['id'],
+      })
+    distances = []
+    for pair in itertools.combinations(users_list, 2):
+      distances.append(distance(*pair))
+    np_distances = np.array([d['distance'] for d in distances])
+    stats = {
+        'min': min(distances, key=lambda d: d['distance'])['distance'],
+        'max': max(distances, key=lambda d: d['distance'])['distance'],
+        'average': np.mean(np_distances),
+        'std': np.std(np_distances)
+    }
+    return jsonify({'distances': distances, 'stats': stats})
 
 
 if __name__ == '__main__':
