@@ -22,10 +22,6 @@ def get_pw(username):
         return admins.get(username)
     return None
 
-app.config['MONGO_DBNAME'] = 'restdb'
-app.config['MONGO_URI'] = 'mongodb://%s:27017/prtdb' % os.environ['DB_PORT_27017_TCP_ADDR']
-mongo_mgr = PyMongo(app)
-
 @auth.error_handler
 def unauthorized():
     # return 403 instead of 401 to prevent browsers from displaying the default
@@ -75,7 +71,6 @@ def get_users():
     users = mongo_mgr.db.users
     output = []
     for user in users.find():
-        print(user)
         output.append({
             'firstname': user['firstname'],
             'lastname': user['lastname'],
@@ -208,4 +203,11 @@ def get_distances():
 
 
 if __name__ == '__main__':
+    app.config['MONGO_DBNAME'] = 'restdb'
+    app.config['MONGO_URI'] = 'mongodb://%s:27017/prtdb' % os.environ['DB_PORT_27017_TCP_ADDR']
+    mongo_mgr = PyMongo(app)
     app.run(host='0.0.0.0', debug=True)
+else:
+    app.config['MONGO_DBNAME'] = 'test'
+    app.config['MONGO_URI'] = 'mongodb://192.168.99.100:27017/prtdb'
+    mongo_mgr = PyMongo(app)
