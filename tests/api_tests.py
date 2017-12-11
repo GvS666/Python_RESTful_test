@@ -2,7 +2,6 @@ import base64
 import json
 import unittest
 
-from flask_pymongo import PyMongo
 from pymongo import MongoClient
 
 import main
