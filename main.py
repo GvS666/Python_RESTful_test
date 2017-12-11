@@ -1,6 +1,7 @@
 #!flask/bin/python
 import itertools
 import uuid
+import os
 
 import numpy as np
 from flask import Flask, jsonify, request, make_response
@@ -22,7 +23,7 @@ def get_pw(username):
     return None
 
 app.config['MONGO_DBNAME'] = 'restdb'
-app.config['MONGO_URI'] = 'mongodb://192.168.99.100:32769/prtdb'
+app.config['MONGO_URI'] = 'mongodb://%s:27017/prtdb' % os.environ['DB_PORT_27017_TCP_ADDR']
 mongo_mgr = PyMongo(app)
 
 @auth.error_handler
@@ -207,4 +208,4 @@ def get_distances():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', debug=True)
